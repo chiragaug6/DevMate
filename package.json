@@ -1,0 +1,37 @@
+{
+  "name": "devmate",
+  "version": "1.0.0",
+  "description": "DevMate is app for Developer to find there true soulmate",
+  "keywords": [
+    "node"
+  ],
+  "homepage": "https://github.com/chiragaug6/DevMate#readme",
+  "bugs": {
+    "url": "https://github.com/chiragaug6/DevMate/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chiragaug6/DevMate.git"
+  },
+  "license": "ISC",
+  "author": "chirag solanki",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.13.2",
+    "nodemon": "^3.1.10",
+    "validator": "^13.15.0"
+  }
+}

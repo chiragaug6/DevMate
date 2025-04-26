@@ -1,0 +1,118 @@
+const User = require("../models/userModel");
+const AppError = require("../utils/AppError");
+const { validateSignUpData } = require("../utils/validation");
+const bcrypt = require("bcrypt");
+
+const signup = async (req, res, next) => {
+  // check if the data is valid or not
+  validateSignUpData(req);
+
+  try {
+    const { firstName, lastName, emailId, password } = req.body;
+
+    // check if the user already there in DB then send response
+    const isUserExists = await User.findOne({ emailId });
+
+    if (isUserExists) {
+      return next(new AppError("user already exists try Login", 200));
+    }
+
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    // if new User then create a User Model instance
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: hashPassword,
+    });
+
+    // now call save method
+    const savedUser = await user.save();
+
+    // generate a jwt token
+    const token = await savedUser.generateToken();
+
+    // set Token in res cookies
+    res.cookie("token", token, {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      httpOnly: true,
+      secure: true,
+    });
+
+    user.password = undefined;
+
+    // send response that user register successfully
+    res.status(201).json({
+      message: "user signup successfully",
+      data: user,
+    });
+  } catch (err) {
+    return next(new AppError(err.message || "user signUp Error ", 500));
+  }
+};
+
+const login = async (req, res, next) => {
+  try {
+    // get data from the body
+    const { emailId, password } = req.body;
+
+    // check if the data is valid or not
+    if (!emailId || !password) {
+      return next(new AppError("Both field are required", 400));
+    }
+
+    // find user with email is present or if not then send response
+    const user = await User.findOne({ emailId }).select("+password");
+
+    console.log("user", user);
+
+    if (!user) {
+      return next(new AppError("user not present Try SignUp"));
+    }
+
+    // check for user provided password with HashPassword in DB if same or if not send response
+    const isPasswordCorrect = await user.checkPassword(password);
+
+    if (!isPasswordCorrect) {
+      return next(new AppError("EmailId or Password InCorrect"));
+    }
+
+    // generate a jwt token
+    const token = await user.generateToken();
+
+    // set Token in res cookies
+    res.cookie("token", token, {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      httpOnly: true,
+      secure: true,
+    });
+
+    console.log("user", user);
+
+    user.password = undefined;
+
+    // send response
+    res.status(201).json({
+      message: "user Login successfully",
+      data: user,
+    });
+  } catch (err) {
+    return next(new AppError(err || "Login Error", 500));
+  }
+};
+
+const logout = (req, res) => {
+  // set null token inside cookie with same expires right now
+  res.cookie("token", null, {
+    maxAge: 0, // 7 days
+  });
+
+  // send response
+  res.status(201).json({
+    message: "user logout successfully",
+    data: req.user,
+  });
+};
+
+module.exports = { login, signup, logout };
