@@ -1,10 +1,12 @@
 const ConnectionRequestModel = require("../models/connectionRequestModel");
 const User = require("../models/userModel");
+const emailQueue = require("../queues/emailQueue");
 const AppError = require("../utils/AppError");
+const sendEmail = require("../utils/sendEmail");
 
 const sendConnection = async (req, res, next) => {
   try {
-    const loggedInUserId = req.user._id;
+    const loggedInUser = req.user;
 
     const { status, toUserId } = req.params;
 
@@ -24,8 +26,8 @@ const sendConnection = async (req, res, next) => {
 
     const existingConnectionRequest = await ConnectionRequestModel.findOne({
       $or: [
-        { fromUserId: loggedInUserId, toUserId },
-        { fromUserId: toUserId, toUserId: loggedInUserId },
+        { fromUserId: loggedInUser._id, toUserId },
+        { fromUserId: toUserId, toUserId: loggedInUser._id },
       ],
     });
 
@@ -34,9 +36,23 @@ const sendConnection = async (req, res, next) => {
     }
 
     const connectionRequest = new ConnectionRequestModel({
-      fromUserId: loggedInUserId,
+      fromUserId: loggedInUser._id,
       toUserId,
       status,
+    });
+
+    await emailQueue.add("sendFriendRequestReminder", {
+      email: user.emailId,
+      subject: "🔔 New Connection Request on DevMate",
+      message: `
+        Hi ${user.firstName},
+    
+        ${loggedInUser.firstName} has sent you a connection request on DevMate.
+    
+        Click here to view and respond: https://devmate.app/requests
+    
+        - Team DevMate
+      `,
     });
 
     const requestData = await connectionRequest.save();
