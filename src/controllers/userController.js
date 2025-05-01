@@ -1,3 +1,4 @@
+const { ChatModel } = require("../models/ChatModel");
 const ConnectionRequestModel = require("../models/connectionRequestModel");
 const User = require("../models/userModel");
 
@@ -80,10 +81,49 @@ const getUserFeed = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    res.json({ data: users });
+    res.status(201).json({
+      success: true,
+      message: "get user feed successfully",
+      data: users,
+    });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
-module.exports = { getReceivedRequests, getUserConnection, getUserFeed };
+const getUsersChat = async (req, res, next) => {
+  const { targetUserId } = req.params;
+  const userId = req.user._id;
+
+  try {
+    let chat = await ChatModel.findOne({
+      participants: { $all: [userId, targetUserId] },
+    }).populate({
+      path: "messages.senderId",
+      select: "firstName lastName",
+    });
+
+    if (!chat) {
+      chat = new ChatModel({
+        participants: [userId, targetUserId],
+        messages: [],
+      });
+      await chat.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "get user chats successfully",
+      data: chat,
+    });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+module.exports = {
+  getReceivedRequests,
+  getUserConnection,
+  getUserFeed,
+  getUsersChat,
+};
