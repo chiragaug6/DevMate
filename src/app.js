@@ -19,7 +19,10 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin:
+      process.env.NODE_ENV === "production"
+        ? process.env.PROD_FRONTEND_URL
+        : process.env.LOCAL_FRONTEND_URL,
     credentials: true,
   })
 );
@@ -27,10 +30,10 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/profile", profileRoutes);
-app.use("/api/v1/user", userRoutes);
-app.use("/api/v1/connection", connectionRoutes);
+app.use("/auth", authRoutes);
+app.use("/profile", profileRoutes);
+app.use("/user", userRoutes);
+app.use("/connection", connectionRoutes);
 
 const server = http.createServer(app);
 initializeSocket(server);
