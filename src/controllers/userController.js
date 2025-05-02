@@ -1,4 +1,4 @@
-const { ChatModel } = require("../models/ChatModel");
+const { ChatModel } = require("../models/chatModel");
 const ConnectionRequestModel = require("../models/connectionRequestModel");
 const User = require("../models/userModel");
 
