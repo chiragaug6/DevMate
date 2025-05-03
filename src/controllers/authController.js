@@ -65,8 +65,6 @@ const login = async (req, res, next) => {
     // find user with email is present or if not then send response
     const user = await User.findOne({ emailId }).select("+password");
 
-    console.log("user", user);
-
     if (!user) {
       return next(new AppError("user not present Try SignUp"));
     }
@@ -87,8 +85,6 @@ const login = async (req, res, next) => {
       httpOnly: true,
       secure: true,
     });
-
-    console.log("user", user);
 
     user.password = undefined;
 
