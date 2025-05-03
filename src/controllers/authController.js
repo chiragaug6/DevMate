@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const AppError = require("../utils/AppError");
+const isCaptchaValid = require("../utils/isCaptchaValid");
 const { validateSignUpData } = require("../utils/validation");
 const bcrypt = require("bcrypt");
 
@@ -8,7 +9,11 @@ const signup = async (req, res, next) => {
   validateSignUpData(req);
 
   try {
-    const { firstName, lastName, emailId, password } = req.body;
+    const { firstName, lastName, emailId, password, token } = req.body;
+
+    if (!isCaptchaValid(token)) {
+      return res.status(403).json({ message: "Invalid reCAPTCHA token" });
+    }
 
     // check if the user already there in DB then send response
     const isUserExists = await User.findOne({ emailId });
@@ -31,10 +36,10 @@ const signup = async (req, res, next) => {
     const savedUser = await user.save();
 
     // generate a jwt token
-    const token = await savedUser.generateToken();
+    const jwtToken = await savedUser.generateToken();
 
     // set Token in res cookies
-    res.cookie("token", token, {
+    res.cookie("token", jwtToken, {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       httpOnly: true,
       secure: true,
