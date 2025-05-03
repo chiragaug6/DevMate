@@ -5,7 +5,7 @@ const emailQueue = require("../queues/emailQueue");
 
 console.log("📅 Daily email cron scheduler initialized...");
 
-cron.schedule("30 9 * * *", async () => {
+cron.schedule(process.env.CRON_EXPR, async () => {
   try {
     console.log("🔔 Cron job started");
 
