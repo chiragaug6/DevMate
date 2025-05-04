@@ -7,7 +7,7 @@ const loginLimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   handler: (req, res, next, options) => {
-    const retryAfter = res.getHeader("RateLimit-Reset");
+    const retryAfter = res.getHeader("RateLimit-Reset") || 300;
     const message = `Too many login attempts. Please try again after ${Math.ceil(
       retryAfter / 60
     )} minute .`;
