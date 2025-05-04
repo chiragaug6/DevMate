@@ -21,6 +21,9 @@ const loginLimiter = rateLimit({
 const globalLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 100, // 100 requests per IP per window
+  keyGenerator: (req) => {
+    return req.headers["cf-connecting-ip"] || req.ip;
+  },
   message: "Too many requests from this IP, please try again after 5 minutes",
   standardHeaders: true,
   legacyHeaders: false,
