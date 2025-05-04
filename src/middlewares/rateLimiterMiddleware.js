@@ -4,6 +4,9 @@ const loginLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 5, // Limit each IP to 5 requests per windowMs
   //message: "Too many Login attempts, please try again after 5 minutes",
+  keyGenerator: (req) => {
+    return req.headers["cf-connecting-ip"] || req.ip;
+  },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   handler: (req, res, next, options) => {
