@@ -15,7 +15,7 @@ const cors = require("cors");
 const http = require("http");
 const socket = require("socket.io");
 const initializeSocket = require("./utils/socket");
-const { globalLimiter } = require("./middlewares/ratelimiterMiddleware");
+const { globalLimiter } = require("./middlewares/rateLimiterMiddleware");
 
 const app = express();
 

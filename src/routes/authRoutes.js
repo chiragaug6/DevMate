@@ -1,7 +1,7 @@
 const express = require("express");
 const { login, signup, logout } = require("../controllers/authController");
 const { isLoggedIn } = require("../middlewares/authMiddleware");
-const { loginLimiter } = require("../middlewares/ratelimiterMiddleware");
+const { loginLimiter } = require("../middlewares/rateLimiterMiddleware");
 
 const router = express.Router();
 
