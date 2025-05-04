@@ -19,7 +19,14 @@ const { globalLimiter } = require("./middlewares/rateLimiterMiddleware");
 
 const app = express();
 
-app.set("trust proxy", true);
+app.set("trust proxy", 2);
+
+app.get("/debug-ip", (req, res) => {
+  res.json({
+    ip: req.ip,
+    forwardedFor: req.headers["x-forwarded-for"],
+  });
+});
 
 app.use(
   cors({

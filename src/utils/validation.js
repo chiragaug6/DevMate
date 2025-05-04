@@ -1,19 +1,22 @@
 const validator = require("validator");
+const AppError = require("./AppError");
 
-const validateSignUpData = (req) => {
-  const { firstName, lastName, emailId, password } = req.body;
+const validateSignUpData = (signUpData) => {
+  const { firstName, lastName, emailId, password } = signUpData;
 
   if (!firstName || !lastName) {
-    throw new Error("Name is Not Valid");
-  } else if (!validator.isEmail(emailId)) {
-    throw new Error("please enter valid email");
-  } else if (!validator.isStrongPassword(password)) {
-    throw new Error("please Enter Strong Password");
+    throw new AppError("Name is not valid", 400);
+  }
+  if (!validator.isEmail(emailId)) {
+    throw new AppError("Invalid email address", 400);
+  }
+  if (!validator.isStrongPassword(password)) {
+    throw new AppError("Password must be stronger", 400);
   }
 };
 
-const validateEditProfileData = (req) => {
-  const allowEditFields = [
+const validateEditProfileData = (editProfileData) => {
+  const allowedFields = [
     "firstName",
     "lastName",
     "emailId",
@@ -24,11 +27,16 @@ const validateEditProfileData = (req) => {
     "skills",
   ];
 
-  const isEditAllowed = Object.keys(req.body).every((field) => {
-    return allowEditFields.includes(field);
-  });
+  const invalidFields = Object.keys(editProfileData).filter(
+    (field) => !allowedFields.includes(field)
+  );
 
-  return isEditAllowed;
+  if (invalidFields.length > 0) {
+    throw new AppError(
+      `Invalid fields in request: ${invalidFields.join(", ")}`,
+      400
+    );
+  }
 };
 
 module.exports = { validateSignUpData, validateEditProfileData };

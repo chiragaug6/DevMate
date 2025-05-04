@@ -21,13 +21,7 @@ const viewProfile = async (req, res, next) => {
 
 const editProfile = async (req, res, next) => {
   try {
-    const isEditAllowed = validateEditProfileData(req);
-
-    console.log(isEditAllowed);
-
-    if (!isEditAllowed) {
-      return next(new AppError("this field Edit are not Allowed", 300));
-    }
+    validateEditProfileData(req.body);
 
     const newData = req.body;
 

@@ -5,21 +5,23 @@ const { validateSignUpData } = require("../utils/validation");
 const bcrypt = require("bcrypt");
 
 const signup = async (req, res, next) => {
-  // check if the data is valid or not
-  validateSignUpData(req);
-
   try {
     const { firstName, lastName, emailId, password, token } = req.body;
 
+    validateSignUpData({ firstName, lastName, emailId, password });
+
     if (!isCaptchaValid(token)) {
-      return res.status(403).json({ message: "Invalid reCAPTCHA token" });
+      return res.status(403).json({
+        success: false,
+        message: "reCAPTCHA verification failed",
+      });
     }
 
     // check if the user already there in DB then send response
     const isUserExists = await User.findOne({ emailId });
 
     if (isUserExists) {
-      return next(new AppError("user already exists try Login", 200));
+      return next(new AppError("Account already exists. Please login.", 409));
     }
 
     const hashPassword = await bcrypt.hash(password, 10);
@@ -49,11 +51,12 @@ const signup = async (req, res, next) => {
 
     // send response that user register successfully
     res.status(201).json({
+      success: true,
       message: "user signup successfully",
       data: user,
     });
   } catch (err) {
-    return next(new AppError(err.message || "user signUp Error ", 500));
+    return next(new AppError(err.message || "Signup failed", 500));
   }
 };
 
@@ -64,21 +67,21 @@ const login = async (req, res, next) => {
 
     // check if the data is valid or not
     if (!emailId || !password) {
-      return next(new AppError("Both field are required", 400));
+      return next(new AppError("Email and password are required", 400));
     }
 
     // find user with email is present or if not then send response
     const user = await User.findOne({ emailId }).select("+password");
 
     if (!user) {
-      return next(new AppError("user not present Try SignUp"));
+      return next(new AppError("Account not found. Please sign up.", 404));
     }
 
     // check for user provided password with HashPassword in DB if same or if not send response
     const isPasswordCorrect = await user.checkPassword(password);
 
     if (!isPasswordCorrect) {
-      return next(new AppError("EmailId or Password InCorrect"));
+      return next(new AppError("Invalid credentials", 401));
     }
 
     // generate a jwt token
@@ -95,11 +98,12 @@ const login = async (req, res, next) => {
 
     // send response
     res.status(201).json({
-      message: "user Login successfully",
+      success: true,
+      message: "Login successful",
       data: user,
     });
   } catch (err) {
-    return next(new AppError(err || "Login Error", 500));
+    return next(new AppError(err.message || "Login failed", 500));
   }
 };
 
@@ -110,9 +114,10 @@ const logout = (req, res) => {
   });
 
   // send response
-  res.status(201).json({
-    message: "user logout successfully",
-    data: req.user,
+  res.status(200).json({
+    success: true,
+    message: "Logout successful",
+    data: null,
   });
 };
 
