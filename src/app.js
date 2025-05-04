@@ -19,14 +19,7 @@ const { globalLimiter } = require("./middlewares/rateLimiterMiddleware");
 
 const app = express();
 
-app.set("trust proxy", 2);
-
-app.get("/debug-ip", (req, res) => {
-  res.json({
-    ip: req.ip,
-    forwardedFor: req.headers["x-forwarded-for"],
-  });
-});
+app.set("trust proxy", 1);
 
 app.use(
   cors({
@@ -50,6 +43,13 @@ app.use("/payment", paymentRoutes);
 
 app.use("/ping", (req, res) => {
   res.send("pong");
+});
+
+app.get("/debug-ip", (req, res) => {
+  res.json({
+    ip: req.ip,
+    forwardedFor: req.headers["x-forwarded-for"],
+  });
 });
 
 const server = http.createServer(app);
