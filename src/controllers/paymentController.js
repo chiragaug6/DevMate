@@ -3,6 +3,7 @@ const {
 } = require("razorpay/dist/utils/razorpay-utils");
 const { razorpayInstance } = require("../config/razorpay");
 const PaymentModel = require("../models/paymentModel");
+const User = require("../models/userModel");
 const membershipAmount = require("../utils/constants");
 
 const initiatePaymentOrder = async (req, res) => {
@@ -51,9 +52,13 @@ const initiatePaymentOrder = async (req, res) => {
 
 const handlePaymentWebhook = async (req, res) => {
   try {
-    console.log("Webhook Called");
+    console.log("Webhook endpoint called");
+
     const webhookSignature = req.get("X-Razorpay-Signature");
-    console.log("Webhook Signature", webhookSignature);
+    console.log("Received Signature:", webhookSignature);
+
+    // Log raw and parsed body
+    console.log("Received Body:", req.body);
 
     const isWebhookValid = validateWebhookSignature(
       JSON.stringify(req.body),
@@ -62,34 +67,58 @@ const handlePaymentWebhook = async (req, res) => {
     );
 
     if (!isWebhookValid) {
-      console.log("INvalid Webhook Signature");
-      return res
-        .status(400)
-        .json({ success: false, message: "Webhook signature is invalid" });
+      console.log("Invalid Webhook Signature");
+      return res.status(400).json({
+        success: false,
+        message: "Webhook signature is invalid",
+      });
     }
 
-    console.log("Valid Webhook Signature");
+    console.log("Webhook Signature Verified");
 
-    // Udpate my payment Status in DB
     const paymentDetails = req.body.payload.payment.entity;
+    console.log("💰 Payment Details:", paymentDetails);
 
-    const payment = await Payment.findOne({ orderId: paymentDetails.order_id });
+    const payment = await PaymentModel.findOne({
+      orderId: paymentDetails.order_id,
+    });
+
+    if (!payment) {
+      console.log("⚠️ No matching order found in DB");
+      return res.status(404).json({
+        success: false,
+        message: "Payment record not found",
+      });
+    }
+
     payment.status = paymentDetails.status;
     await payment.save();
-    console.log("Payment saved");
+    console.log("✅ Payment status updated in DB");
 
     const user = await User.findOne({ _id: payment.userId });
+    if (!user) {
+      console.log("No matching user found for payment");
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     user.isPremium = true;
-    user.membershipType = payment.notes.membershipType;
-    console.log("User saved");
-
+    user.memberShipType = payment.notes.membershipType;
     await user.save();
+    console.log("✅ User updated to Premium");
 
-    return res
-      .status(200)
-      .json({ success: true, message: "Webhook received successfully" });
+    return res.status(200).json({
+      success: true,
+      message: "Webhook received and processed successfully",
+    });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error("🔥 Webhook Error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -104,7 +133,7 @@ const confirmPaymentStatus = async (req, res) => {
     }
     return res
       .status(200)
-      .json({ success: true, message: "user is not Premium", ...user });
+      .json({ success: true, message: "user is not Premium", data: user });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
