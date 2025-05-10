@@ -57,15 +57,4 @@ initializeSocket(server);
 
 app.use(errorMiddleware);
 
-dbConnect()
-  .then(() => {
-    console.log("Database Connection successfully");
-    require("./jobs/dailyEmailCron");
-    require("./workers/emailWorker");
-    server.listen(process.env.PORT, () => {
-      console.log(`Server is Running on ${process.env.PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.log("fail to start server!");
-  });
+module.exports = { server, app };
