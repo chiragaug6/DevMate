@@ -2,15 +2,15 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [ main ]            # Deploy on push to main
+    branches: [ main ]
   pull_request:
-    branches: [ main ]            # Run lint on PRs to main
+    branches: [ main ]
 
 jobs:
   lint:
     name: Lint Check
     runs-on: ubuntu-latest
-    continue-on-error: true       # ✅ Lint can fail without blocking deploy
+    continue-on-error: true
 
     steps:
     - name: Checkout Code
@@ -36,12 +36,12 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Setup Node.js
+    - name: Setup Node.js (for consistency and npm usage)
       uses: actions/setup-node@v4
       with:
         node-version: 22
 
-    - name: Install Dependencies
+    - name: Install Dependencies (for GitHub-side scripts, optional)
       run: npm ci
 
     - name: Save EC2 SSH Key
@@ -49,25 +49,25 @@ jobs:
         echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
         chmod 600 key.pem
 
-    - name: Deploy via SSH
+    - name: Deploy to EC2 via SSH
       run: |
         ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          # ✅ Load NVM so node/npm/pm2 work in non-login shell
+          set -e
+
+          # ✅ Optional safety: load NVM if needed
           export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+          [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
 
-          # ✅ Navigate to backend project
+          # ✅ Use Node.js version if not default
+          nvm use 22 || nvm install 22
+
           cd ${{ secrets.BACKEND_DIR }}
-
-          # ✅ Pull latest code and install dependencies
           git pull origin main
           npm install
 
-          # ✅ Restart or start PM2 app
           pm2 reload devTinder-backend || \
           pm2 start npm --name "devTinder-backend" -- start
 
-          # ✅ Save PM2 process list
           pm2 save
         EOF
