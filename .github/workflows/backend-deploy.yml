@@ -13,19 +13,19 @@ jobs:
     continue-on-error: true
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-    - name: Install Dependencies
-      run: npm ci
+      - name: Install Dependencies
+        run: npm ci
 
-    - name: Run Linter
-      run: npm run lint
+      - name: Run Linter
+        run: npm run lint
 
   deploy:
     if: github.ref == 'refs/heads/main'
@@ -33,41 +33,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Setup Node.js (for consistency and npm usage)
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
+      - name: Setup Node.js (for consistency and npm usage)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-    - name: Install Dependencies (for GitHub-side scripts, optional)
-      run: npm ci
+      - name: Install Dependencies (for GitHub-side scripts, optional)
+        run: npm ci
 
-    - name: Save EC2 SSH Key
-      run: |
-        echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
-        chmod 600 key.pem
+      - name: Save EC2 SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
 
-    - name: Deploy to EC2 via SSH
-      run: |
-        ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          set -e
-
-          # ✅ Optional safety: load NVM if needed
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-          [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
-
-          # ✅ Use Node.js version if not default
-          nvm use 22 || nvm install 22
-
-          cd ${{ secrets.BACKEND_DIR }}
-          git pull origin main
-          npm install
-
-          pm2 reload devTinder-backend || \
-          pm2 start npm --name "devTinder-backend" -- start
-
-          pm2 save
-        EOF
+      - name: Deploy to EC2 via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            cd ${{ secrets.BACKEND_DIR }}
+            git pull origin main
+            npm install
+            pm2 reload devTinder-backend || pm2 start npm --name "devTinder-backend" -- start
+            pm2 save
+          EOF
