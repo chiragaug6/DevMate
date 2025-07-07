@@ -1,0 +1,69 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [ main ]           # Trigger on push to main branch
+  pull_request:
+    branches: [ main ]           # Run lint on pull requests to main
+
+jobs:
+  lint:
+    name: Lint Check
+    runs-on: ubuntu-latest
+    continue-on-error: true      # ✅ Let lint fail but continue to deploy
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run linter
+      run: npm run lint
+
+  deploy:
+    if: github.ref == 'refs/heads/main'   # ✅ Deploy only on main push
+    name: Deploy Backend to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Save EC2 SSH Key
+      run: |
+        echo "${{ secrets.EC2_SSH_KEY }}" > key.pem  # Save SSH private key to file
+        chmod 600 key.pem                            # Secure file permissions
+
+    - name: Deploy via SSH
+      run: |
+        ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+          # Navigate to the backend project directory
+          cd ${{ secrets.BACKEND_DIR }}
+          
+          # Pull the latest changes from the main branch
+          git pull origin main
+          
+          # Install/update backend dependencies
+          npm install
+          
+          # Reload the app with PM2 (start if not already running)
+          pm2 reload devTinder-backend || pm2 start npm --name "devTinder-backend" -- start
+          
+          # Save PM2 state to preserve it across EC2 restarts
+          pm2 save
+        EOF
