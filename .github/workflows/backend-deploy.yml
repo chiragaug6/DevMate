@@ -51,26 +51,13 @@ jobs:
 
       - name: Deploy to EC2 via SSH
         run: |
-          ssh -tt -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
-            set -e
-            cd ${{ secrets.BACKEND_DIR }}
-            git pull origin main
-            npm install
-            # Ensure pm2 is installed globally
-            if ! command -v pm2 &> /dev/null; then
-              sudo npm install -g pm2
-            fi
-            pm2 reload devTinder-backend || pm2 start npm --name "devTinder-backend" -- start
-            pm2 save
-          EOF
-          rc=$?
-          if [ "$rc" -eq 255 ]; then
-            echo "Ignoring SSH broken pipe exit code 255"
-            exit 0
-          elif [ "$rc" -ne 0 ]; then
-            echo "Deployment failed with exit code $rc"
-            exit $rc
-          fi
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "cd ${{ secrets.BACKEND_DIR }} && \
+            git pull origin main && \
+            npm install && \
+            (command -v pm2 >/dev/null 2>&1 || sudo npm install -g pm2) && \
+            pm2 reload devTinder-backend || pm2 start npm --name 'devTinder-backend' -- start && \
+            pm2 save"
           
       - name: Remove SSH key
         run: rm -f key.pem
