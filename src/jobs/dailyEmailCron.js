@@ -1,6 +1,6 @@
 const cron = require("node-cron");
 const ConnectionRequestModel = require("../models/connectionRequestModel");
-const { subDays, startOfDay, endOfDay } = require("date-fns");
+const { startOfDay, endOfDay } = require("date-fns");
 const emailQueue = require("../queues/emailQueue");
 
 console.log("📅 Daily email cron scheduler initialized...");

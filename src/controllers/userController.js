@@ -4,7 +4,7 @@ const User = require("../models/userModel");
 
 const USER_SAFE_DATA = "firstName lastName age gender about skills photoUrl";
 
-const getReceivedRequests = async (req, res, next) => {
+const getReceivedRequests = async (req, res) => {
   const loggedInUser = req.user;
 
   const data = await ConnectionRequestModel.find({
@@ -19,7 +19,7 @@ const getReceivedRequests = async (req, res, next) => {
   });
 };
 
-const getUserConnection = async (req, res, next) => {
+const getUserConnection = async (req, res) => {
   const loggedInUser = req.user;
 
   const connectionRequests = await ConnectionRequestModel.find({
@@ -91,7 +91,7 @@ const getUserFeed = async (req, res) => {
   }
 };
 
-const getUsersChat = async (req, res, next) => {
+const getUsersChat = async (req, res) => {
   const { targetUserId } = req.params;
   const userId = req.user._id;
 

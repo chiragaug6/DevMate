@@ -1,4 +1,4 @@
-const errorMiddleware = (err, req, res, next) => {
+const errorMiddleware = (err, req, res) => {
   err.statusCode = err.statusCode || 500;
   err.message = err.message || "Something went wrong";
   err.stack = process.env.NODE_ENV == "development" ? err.stack : null;

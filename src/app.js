@@ -1,9 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-
 const cookieParser = require("cookie-parser");
-
-const dbConnect = require("./config/dbConnect");
 const errorMiddleware = require("./middlewares/errorMiddleware");
 
 const authRoutes = require("./routes/authRoutes");
@@ -13,7 +10,6 @@ const connectionRoutes = require("./routes/connectionRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const cors = require("cors");
 const http = require("http");
-const socket = require("socket.io");
 const initializeSocket = require("./utils/socket");
 const { globalLimiter } = require("./middlewares/rateLimiterMiddleware");
 

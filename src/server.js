@@ -1,4 +1,4 @@
-const { server, app } = require("./app.js");
+const { server } = require("./app.js");
 const dbConnect = require("./config/dbConnect.js");
 
 dbConnect()
@@ -11,5 +11,5 @@ dbConnect()
     });
   })
   .catch((err) => {
-    console.log("fail to start server!");
+    console.log("fail to start server!",err);
   });

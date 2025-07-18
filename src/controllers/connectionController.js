@@ -2,7 +2,6 @@ const ConnectionRequestModel = require("../models/connectionRequestModel");
 const User = require("../models/userModel");
 const emailQueue = require("../queues/emailQueue");
 const AppError = require("../utils/AppError");
-const sendEmail = require("../utils/sendEmail");
 
 const sendConnection = async (req, res, next) => {
   try {

@@ -42,7 +42,7 @@ const editProfile = async (req, res, next) => {
   }
 };
 
-const deleteProfile = async (req, res, next) => {
+const deleteProfile = async (req, res) => {
   const userId = req.user._id;
 
   const deletedUser = await User.findByIdAndDelete(userId);
