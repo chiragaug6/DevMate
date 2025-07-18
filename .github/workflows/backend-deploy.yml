@@ -2,50 +2,55 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]           # Trigger on push to main branch
   pull_request:
-    branches: [ main ]
+    branches: [ main ]           # Run lint on pull requests to main
 
 jobs:
   lint:
     name: Lint Check
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: true      # ✅ Let lint fail but continue to deploy
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
 
-      - name: Install Dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Run Linter
-        run: npm run lint
+    - name: Run linter
+      run: npm run lint
 
   deploy:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'   # ✅ Deploy only on main push
     name: Deploy Backend to EC2
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Setup Node.js (for consistency and npm usage)
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
 
-      - name: Install Dependencies (for GitHub-side scripts, optional)
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Deploy to EC2 via SSH
-        run: |
+    - name: Save EC2 SSH Key
+      run: |
+        echo "${{ secrets.EC2_SSH_KEY }}" > key.pem  # Save SSH private key to file
+        chmod 600 key.pem                            # Secure file permissions
+
+    - name: Deploy to EC2 via SSH
+      run: |
           ssh -tt -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
 
@@ -59,5 +64,3 @@ jobs:
             pm2 reload devTinder-backend || pm2 start npm --name "devTinder-backend" -- start
             pm2 save
           EOF
-
-      
