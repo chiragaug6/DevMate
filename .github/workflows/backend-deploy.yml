@@ -63,6 +63,7 @@ jobs:
             pm2 reload devTinder-backend || pm2 start npm --name "devTinder-backend" -- start
             pm2 save
           EOF
+          || true
 
       - name: Remove SSH key
         run: rm -f key.pem
