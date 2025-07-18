@@ -44,18 +44,20 @@ jobs:
       - name: Install Dependencies (for GitHub-side scripts, optional)
         run: npm ci
 
-      - name: Save EC2 SSH Key
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
-          chmod 600 key.pem
-
       - name: Deploy to EC2 via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -tt -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
+
+            # ✅ Load fnm (Fast Node Manager)
+            export PATH="/home/ubuntu/.fnm:$PATH"
+            eval "$(fnm env)"
+
             cd ${{ secrets.BACKEND_DIR }}
             git pull origin main
             npm install
             pm2 reload devTinder-backend || pm2 start npm --name "devTinder-backend" -- start
             pm2 save
           EOF
+
+      
