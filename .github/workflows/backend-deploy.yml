@@ -63,4 +63,5 @@ jobs:
             npm install
             pm2 reload devTinder-backend || pm2 start npm --name "devTinder-backend" -- start
             pm2 save
-          EOF || true # ✅ Don't fail the job on broken pipe
+          EOF 
+            || true # ✅ Don't fail the job on broken pipe
