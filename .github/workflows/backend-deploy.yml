@@ -63,7 +63,14 @@ jobs:
             pm2 reload devTinder-backend || pm2 start npm --name "devTinder-backend" -- start
             pm2 save
           EOF
-          || true
-
+          rc=$?
+          if [ "$rc" -eq 255 ]; then
+            echo "Ignoring SSH broken pipe exit code 255"
+            exit 0
+          elif [ "$rc" -ne 0 ]; then
+            echo "Deployment failed with exit code $rc"
+            exit $rc
+          fi
+          
       - name: Remove SSH key
         run: rm -f key.pem
