@@ -53,14 +53,16 @@ jobs:
         run: |
           ssh -tt -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             set -e
-
-            # ✅ Load fnm (Fast Node Manager)
-            export PATH="/home/${USER}/.fnm:$PATH"
-            eval "$(fnm env)"
-
             cd ${{ secrets.BACKEND_DIR }}
             git pull origin main
             npm install
+            # Ensure pm2 is installed globally
+            if ! command -v pm2 &> /dev/null; then
+              sudo npm install -g pm2
+            fi
             pm2 reload devTinder-backend || pm2 start npm --name "devTinder-backend" -- start
             pm2 save
           EOF
+
+      - name: Remove SSH key
+        run: rm -f key.pem
